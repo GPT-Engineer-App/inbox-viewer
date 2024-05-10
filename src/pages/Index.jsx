@@ -1,21 +1,22 @@
 import { Container, VStack, Text, Input, Button, Box, Spinner, useToast } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 
-const fetchEmails = async (setEmails, setLoading, setError, setFilteredEmails) => {
+const fetchEmails = async (setEmails, setLoading, setError, setFilteredEmails, authToken) => {
   setLoading(true);
   setError(false);
   try {
-    // Simulated fetch request (replace with actual API call)
-    const response = await new Promise((resolve) => setTimeout(() => resolve({
-      data: [
-        { id: 1, sender: "John Doe", subject: "Meeting Reminder", body: "Don't forget our meeting.", date: "2023-01-01" },
-        { id: 2, sender: "Jane Smith", subject: "Project Update", body: "Here's the latest update on the project.", date: "2023-01-02" }
-      ]
-    }), 1000));
-    setEmails(response.data);
-    setFilteredEmails(response.data);
+    const response = await fetch('https://api.emailservice.com/inbox', {
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      }
+    });
+    if (!response.ok) throw new Error('Failed to fetch emails');
+    const data = await response.json();
+    setEmails(data);
+    setFilteredEmails(data);
   } catch (error) {
     setError(true);
+    console.error('Error fetching emails:', error);
   } finally {
     setLoading(false);
   }
@@ -47,10 +48,14 @@ const Index = () => {
   const [selectedEmail, setSelectedEmail] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [authToken, setAuthToken] = useState('');
   const toast = useToast();
 
   useEffect(() => {
-    fetchEmails(setEmails, setLoading, setError, setFilteredEmails);
+    // Placeholder for authentication logic
+    const token = 'your-oauth-token-here'; // This should be dynamically obtained
+    setAuthToken(token);
+    fetchEmails(setEmails, setLoading, setError, setFilteredEmails, token);
   }, []);
 
   const handleSearch = (event) => {
@@ -60,7 +65,7 @@ const Index = () => {
   };
 
   const handleRefresh = () => {
-    fetchEmails(setEmails, setLoading, setError, setFilteredEmails);
+    fetchEmails(setEmails, setLoading, setError, setFilteredEmails, authToken);
     toast({
       title: "Inbox refreshed.",
       status: "info",
